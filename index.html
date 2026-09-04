@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Minipeople Candles — конструктор</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F5EFE2;
+    --paper:#FBF8F1;
+    --ink:#2B2621;
+    --ink-soft:#6B6055;
+    --amber:#C97A3D;
+    --amber-deep:#A85F2A;
+    --green:#1F4D3A;
+    --line:#E4D9C4;
+    --line-strong:#D2C4A8;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Public Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  #app{
+    max-width:440px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 0 40px rgba(43,38,33,0.06);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 20px 8px;
+  }
+  .back-btn{
+    background:none;border:none;cursor:pointer;
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .back-btn:hover{background:var(--line);}
+  .back-btn svg{width:18px;height:18px;}
+  .step-label{
+    font-size:13px;color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .progress{
+    display:flex;gap:4px;
+    padding:0 20px 18px;
+  }
+  .progress span{
+    flex:1;height:3px;border-radius:2px;
+    background:var(--line);
+    transition:background .3s;
+  }
+  .progress span.done{background:var(--amber);}
+
+  .screen{
+    flex:1;
+    padding:4px 20px 100px;
+    display:none;
+    flex-direction:column;
+  }
+  .screen.active{display:flex;}
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:26px;
+    line-height:1.15;
+    margin:6px 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 20px;
+    line-height:1.5;
+  }
+
+  /* --- Стартовый экран --- */
+  .hero{
+    padding:36px 20px 20px;
+    text-align:left;
+  }
+  .hero-mark{
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--green);
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .hero h1{font-size:32px;max-width:280px;}
+  .start-cards{
+    display:flex;flex-direction:column;gap:12px;
+    padding:20px;
+  }
+  .start-card{
+    border:1.5px solid var(--line-strong);
+    border-radius:var(--radius);
+    padding:20px;
+    background:var(--paper);
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    transition:border-color .2s, transform .15s;
+  }
+  .start-card:active{transform:scale(0.98);}
+  .start-card:hover{border-color:var(--amber);}
+  .start-card .txt strong{
+    display:block;font-family:'Fraunces',serif;font-size:19px;font-weight:500;margin-bottom:3px;
+  }
+  .start-card .txt span{font-size:13px;color:var(--ink-soft);}
+  .start-card .arrow{color:var(--amber);flex-shrink:0;}
+
+  /* --- Опции: свотчи цвета --- */
+  .swatch-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    margin-bottom:8px;
+  }
+  .swatch{
+    display:flex;flex-direction:column;align-items:center;gap:7px;
+    cursor:pointer;background:none;border:none;padding:0;
+  }
+  .swatch .dot{
+    width:52px;height:52px;border-radius:50%;
+    border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);
+    transition:border-color .15s, transform .15s;
+  }
+  .swatch.selected .dot{border-color:var(--amber);transform:scale(1.08);}
+  .swatch span{font-size:12px;color:var(--ink-soft);text-align:center;}
+  .swatch.selected span{color:var(--ink);font-weight:600;}
+
+  /* --- Карточки-варианты (отделка, воск, фитиль) --- */
+  .option-cards{display:flex;flex-direction:column;gap:10px;}
+  .option-card{
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    display:flex;align-items:center;gap:12px;
+    cursor:pointer;background:var(--paper);
+    text-align:left;
+  }
+  .option-card.selected{border-color:var(--amber);background:#FDF6EC;}
+  .option-card .icon{
+    width:38px;height:38px;border-radius:10px;
+    background:var(--cream);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;color:var(--amber-deep);
+  }
+  .option-card .body{flex:1;}
+  .option-card .body strong{display:block;font-size:15px;font-weight:600;}
+  .option-card .body p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);line-height:1.4;}
+  .option-card .check{
+    width:20px;height:20px;border-radius:50%;
+    border:1.5px solid var(--line-strong);
+    flex-shrink:0;
+  }
+  .option-card.selected .check{
+    border-color:var(--amber);background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .option-card.selected .check svg{width:12px;height:12px;color:#fff;}
+
+  /* --- Ароматы --- */
+  .fragrance-list{display:flex;flex-direction:column;gap:10px;}
+  .fragrance-card{
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    cursor:pointer;background:var(--paper);
+    text-align:left;
+  }
+  .fragrance-card.selected{border-color:var(--amber);background:#FDF6EC;}
+  .fr-top{display:flex;align-items:flex-start;gap:10px;}
+  .fr-icon{
+    width:40px;height:40px;border-radius:10px;background:var(--cream);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--green);
+  }
+  .fr-body{flex:1;}
+  .fr-head{display:flex;justify-content:space-between;align-items:center;}
+  .fr-head strong{font-size:15.5px;font-weight:600;}
+  .fr-notes{font-size:12px;color:var(--amber-deep);margin:2px 0 5px;font-weight:600;}
+  .fr-desc{font-size:13px;color:var(--ink-soft);line-height:1.5;margin:0;}
+  .fr-check{color:var(--amber);flex-shrink:0;}
+  .fr-check svg{width:18px;height:18px;display:none;}
+  .fragrance-card.selected .fr-check svg{display:block;}
+
+  /* --- Сводка заказа --- */
+  .summary-card{
+    border:1.5px solid var(--line);border-radius:var(--radius);
+    padding:18px;background:var(--paper);margin-bottom:14px;
+  }
+  .summary-row{
+    display:flex;justify-content:space-between;
+    padding:9px 0;border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .k{color:var(--ink-soft);}
+  .summary-row .v{font-weight:600;text-align:right;}
+  .price-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:14px 0 0;margin-top:6px;border-top:1.5px solid var(--ink);
+  }
+  .price-row .label{font-size:14px;color:var(--ink-soft);}
+  .price-row .amount{font-family:'Fraunces',serif;font-size:24px;font-weight:600;}
+
+  /* --- Footer / CTA --- */
+  .footer{
+    position:sticky;bottom:0;
+    background:linear-gradient(to top, var(--paper) 60%, transparent);
+    padding:20px 20px 24px;
+    margin-top:auto;
+  }
+  .btn-primary{
+    width:100%;background:var(--ink);color:#fff;border:none;
+    height:50px;border-radius:12px;font-size:15px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-primary:not(:disabled):active{transform:scale(0.98);}
+  .btn-price{
+    display:block;text-align:center;font-size:12.5px;color:var(--ink-soft);margin-top:9px;
+  }
+
+  input[type=text], input[type=tel], input[type=email]{
+    width:100%;padding:13px 14px;border:1.5px solid var(--line-strong);
+    border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:12px;
+    background:var(--paper);color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:var(--amber);}
+  label.field-label{font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;display:block;}
+
+  .order-status{
+    text-align:center;padding:40px 20px;
+  }
+  .order-status .mark{
+    width:64px;height:64px;border-radius:50%;background:var(--green);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#fff;
+  }
+  .order-status .mark svg{width:30px;height:30px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ======================= ДАННЫЕ КАТАЛОГА ======================= */
+/* Тексты, цены и фото — отредактируй под себя. Все суммы в рублях, в копейках при отправке в ЮKassa. */
+
+const CONTAINERS = [
+  { id:'minipeople', name:'Свеча MiniPeople', price:2000, desc:'', photo:'images/group-five.jpg' },
+  { id:'notnormal', name:'Свеча NotNorMal', price:2000, desc:'' },
+];
+
+/* Реальные фото по цветам — используются вместо SVG-иллюстрации, когда есть фото под конкретный цвет.
+   Добавишь новое фото — впиши его сюда как 'images/имя-файла.jpg'. */
+const COLOR_PHOTOS = {
+  'white': 'images/white-charcoal.jpg',
+  'charcoal': 'images/white-charcoal.jpg',
+  'blue': 'images/blue-red.jpg',
+  'red': 'images/blue-red.jpg',
+  'sand': 'images/sand-lit.jpg',
+};
+
+/* Фото готового подсвечника (форма логотипа MINI с чашей под чайную свечу).
+   Пока есть фото только натурального (неокрашенного) гипса — используем его
+   как заглушку для серого, остальные цвета подсвечника пока идут через SVG. */
+const HOLDER_PHOTOS = {
+  'grey': 'images/holder-wing.jpg',
+};
+
+const COLORS = [
+  { id:'white', name:'Белый', hex:'#ffffff' },
+  { id:'sand', name:'Песочный', hex:'#D8C5AC' },
+  { id:'neon-yellow', name:'Неоновый жёлтый', hex:'#fcff00' },
+  { id:'pink', name:'Розовый', hex:'#fa6c93' },
+  { id:'red', name:'Красный', hex:'#de473b' },
+  { id:'periwinkle', name:'Васильковый', hex:'#647bfe' },
+  { id:'blue', name:'Синий', hex:'#1151e0' },
+  { id:'green', name:'Зелёный', hex:'#21ae7e' },
+  { id:'grey', name:'Серый', hex:'#b7b7b7' },
+  { id:'charcoal', name:'Графит', hex:'#434343' },
+];
+
+const FINISHES = [
+  { id:'chrome', name:'Хромированные детали', desc:'Хромирование значка на матовом подсвечнике' },
+  { id:'mono', name:'Моноцвет', desc:'Все детали в одном цвете, матовая текстура' },
+];
+
+const FRAGRANCES = [
+  { id:'moroccan-cashmere', name:'Moroccan Cashmere', notes:'Бергамот · лаванда · сандал', desc:'Мягкий и утончённый кашемир — одно из самых роскошных волокон в мире. Элегантный аромат с пудровыми верхними нотами, сладким сердцем из лаванды и ванили и древесной базой из мускуса, амбры и сандала.' },
+  { id:'green-route', name:'Green Route', notes:'Кипарис · кедр · пихта', desc:'Аромат дороги через хвойный лес к тёплому домашнему очагу. Свежие травы и лёгкие цитрусовые ноты переплетаются с пихтовым бальзамом, мхом и пачули — атмосфера тихого зимнего вечера и уюта.' },
+  { id:'macaron-shop', name:'Macaron Shop', notes:'Миндаль · малина · ваниль', desc:'Сладкое объятие уютной кондитерской: ореховое тепло миндаля сочетается с нежной сладостью ванили, а нотки малины в сахарной пудре и лимона добавляют лёгкости.' },
+  { id:'christmas-bakeshop', name:'Christmas Bakeshop', notes:'Карамель · сандал · ваниль', desc:'Загляните в очаровательную рождественскую пекарню, где золотистая карамель и коричневый сахар смешиваются с гурманскими нотами пачули и амбры — сладкий, уютный праздничный аромат.' },
+  { id:'spritz-mode', name:'Spritz Mode', notes:'Лайм · апельсин · вишня', desc:'Свежие цитрусовые со сверкающими игристыми нотами создают сочную смесь вишни и ягод.' },
+  { id:'fijian-pineapple', name:'Fijian Pineapple', notes:'Ананас · грейпфрут · кедр', desc:'Тропическая поездка к океану: сочный ананас, свежий грейпфрут и бергамот сменяются тёплым кедром, жасмином и пачули — аромат солнечных островов и беззаботного летнего вечера.' },
+  { id:'orange-blossom-marshmallow', name:'Orange Blossom Marshmallow', notes:'Апельсиновый цвет · зефир · ваниль', desc:'Мечтательный аромат, сочетающий солнечный апельсиновый цвет с мягким зефиром. Жимолость и нероли добавляют ботаническую сладость, а тёплая база из мускуса и амбры обогащает аромат.' },
+  { id:'jamaica-me-crazy', name:'Jamaica Me Crazy', notes:'Мандарин · ананас · ром', desc:'Бокал тропического коктейля на закате: сочный ананас, апельсин и дыня смешиваются с нежным кокосом и каплей рома. Яркий, солнечный аромат отпуска и тёплого песка.' },
+  { id:'day-at-the-spa', name:'Day at the Spa', notes:'Лемонграсс · смородина · пачули', desc:'Успокаивающий и сбалансированный аромат, сочетающий ноты лемонграсса и чёрной смородины с оттенками пачули и сахарного тростника.' },
+  { id:'royal-melon-fizz', name:'Royal Melon Fizz', notes:'Мята · шампанское · дыня', desc:'Современный, игривый аромат: искрящиеся ноты мяты и шампанского танцуют в сердце из сочной дыни, а нотка пралине в шлейфе привносит сливочную сладость.' },
+  { id:'cozy-cashmere', name:'Cozy Cashmere', notes:'Шалфей · кашемир · миндаль', desc:'Мягкий, обволакивающий аромат тёплого свитера: свежий осенний шалфей сочетается с кремовым кашемиром, а сладкое ванильно-миндальное молоко в базе добавляет сливочность.' },
+  { id:'coconut-lime', name:'Coconut Lime', notes:'Лайм · кокос · тонка', desc:'Кремовый цитрусово-фруктовый аромат тропического коктейля: сочные лайм и манго сменяются сливочным кокосом и ананасом, а база даёт мягкое пина-коладное послевкусие.' },
+  { id:'peach-nectar', name:'Peach Nectar', notes:'Банан · персик · тонка', desc:'Сочный персик, спелое манго и папайя — аромат тёплого летнего дня, наполненного солнцем и фруктовой свежестью.' },
+  { id:'rice-milk-and-oats', name:'Rice Milk And Oats', notes:'Рис · овсянка · сандал', desc:'Тёплое медленное утро, когда дома тихо и пахнет свежеприготовленной кашей. Нежный рис и молоко раскрываются сливочным кокосом, лёгким дымом и ванилью.' },
+  { id:'moonlit-silk', name:'Moonlit Silk', notes:'Персик · рис · сандал', desc:'Тёплый вечер в горах, окутанный мягким серебристым светом. Сочный персик и бергамот встречаются с нежным молоком и фиалкой, раскрываясь в тёплом сандале и мускусе.' },
+  { id:'pink-watermelon-lemonade', name:'Pink Watermelon Lemonade', notes:'Арбуз · клубника · ваниль', desc:'Напоминание о беззаботном лете: сочные арбуз, лимон и свежая зелень сменяются клубнично-ананасовым сердцем с гарденией, а в базе остаётся сладкое облако ванили.' },
+  { id:'chamomile-tea', name:'Chamomile Tea', notes:'Белый чай · ромашка · кедр', desc:'Уютный аромат чашки чая с хорошим другом: верхние ноты белого чая, лимона и мяты приправлены сердцем ромашки и лаванды, дополнены кедром и каплей сахара.' },
+  { id:'japanese-cherry-blossom', name:'Japanese Cherry Blossom', notes:'Вишнёвый цвет · роза · сандал', desc:'Свежий взгляд на классический весенний аромат: цветущая сакура наполнена нотами магнолии и розы, а вишня, бобы тонка и сандал придают глубину.' },
+];
+
+const WICKS = [
+  { id:'wood', name:'Деревянный фитиль', desc:'Уютное потрескивание при горении' },
+  { id:'cotton', name:'Хлопковый фитиль', desc:'Стабильное горение' },
+];
+
+const HOLDER_COLORS = COLORS;
+/* Покупатель выбирает из полного списка ароматов, как и в свече */
+const HOLDER_FRAGRANCES = FRAGRANCES;
+
+/* ======================= СОСТОЯНИЕ ======================= */
+let state = {
+  branch:null, // 'candle' | 'holder'
+  container:null, color:null, finish:null, fragrance:null, wick:null,
+  holderColor:null, holderFragrances:[], /* массив из 5 выбранных ароматов */
+  name:'', phone:'', email:'',
+};
+
+const candleSteps = ['start-candle-container','start-candle-color','start-candle-finish','start-candle-fragrance','start-candle-wick','summary','contact'];
+const holderSteps = ['start-holder-color','start-holder-fragrance','summary','contact'];
+
+let flow = [];
+let stepIndex = 0;
+
+/* ======================= РЕНДЕР ======================= */
+const app = document.getElementById('app');
+
+function render(){
+  app.innerHTML = '';
+  if(state.branch === null){
+    app.appendChild(renderStart());
+    return;
+  }
+  const wrap = document.createElement('div');
+  wrap.style.display='flex';
+  wrap.style.flexDirection='column';
+  wrap.style.minHeight='100vh';
+  wrap.appendChild(renderTopbar());
+  wrap.appendChild(renderScreenFor(flow[stepIndex]));
+  app.appendChild(wrap);
+}
+
+function renderTopbar(){
+  const bar = document.createElement('div');
+  const total = flow.length;
+  bar.innerHTML = `
+    <div class="topbar">
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="step-label">Шаг ${stepIndex+1} из ${total}</span>
+    </div>
+    <div class="progress">
+      ${flow.map((_,i)=>`<span class="${i<=stepIndex?'done':''}"></span>`).join('')}
+    </div>`;
+  return bar;
+}
+
+function goBack(){
+  if(stepIndex===0){ state.branch=null; render(); return; }
+  stepIndex--; render();
+}
+function goNext(){
+  if(stepIndex >= flow.length-1){ submitOrder(); return; }
+  stepIndex++; render();
+}
+
+function chooseBranch(b){
+  state.branch=b;
+  flow = b==='candle' ? candleSteps : holderSteps;
+  stepIndex=0;
+  render();
+}
+
+/* ---------- Стартовый экран ---------- */
+function renderStart(){
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div class="hero">
+      <div class="hero-mark">MINIPEOPLE × ВАШ БРЕНД</div>
+      <h1>Собери свою свечу для дороги</h1>
+      <p class="subtitle">Цвет, отделка, аромат и фитиль — под твой Mini.</p>
+    </div>
+    <div class="start-cards">
+      <button class="start-card" onclick="chooseBranch('candle')">
+        <img src="images/group-five.jpg" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+        <div class="txt"><strong>Собрать свечу</strong><span>Контейнерная свеча, 5 параметров</span></div>
+        <span class="arrow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+      <button class="start-card" onclick="chooseBranch('holder')">
+        <img src="images/holder-wing.jpg" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+        <div class="txt"><strong>Собрать подсвечник</strong><span>Подсвечник + набор из 5 чайных свечей на выбор</span></div>
+        <span class="arrow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+    </div>`;
+  return el;
+}
+
+/* ---------- Экраны по шагам ---------- */
+function renderScreenFor(step){
+  const el = document.createElement('div');
+  el.className='screen active';
+
+  if(step==='start-candle-container') el.appendChild(stepContainer());
+  if(step==='start-candle-color') el.appendChild(stepColor('color', COLORS, 'Цвет подсвечника', ''));
+  if(step==='start-candle-finish') el.appendChild(stepFinish());
+  if(step==='start-candle-fragrance') el.appendChild(stepFragrance('fragrance', FRAGRANCES));
+  if(step==='start-candle-wick') el.appendChild(stepWick());
+  if(step==='start-holder-color') el.appendChild(stepColor('holderColor', HOLDER_COLORS, 'Цвет подсвечника', ''));
+  if(step==='start-holder-fragrance') el.appendChild(stepFragranceMulti());
+  if(step==='summary') el.appendChild(stepSummary());
+  if(step==='contact') el.appendChild(stepContact());
+
+  return el;
+}
+
+function screenShell(title, subtitle, bodyEl, canProceed, priceNote, previewHtml){
+  const wrap = document.createElement('div');
+  wrap.style.display='flex';wrap.style.flexDirection='column';wrap.style.flex='1';
+  wrap.innerHTML = `<h1>${title}</h1>${previewHtml||''}<p class="subtitle">${subtitle||''}</p>`;
+  const bodyHolder = document.createElement('div');
+  bodyHolder.style.flex='1';
+  bodyHolder.appendChild(bodyEl);
+  wrap.appendChild(bodyHolder);
+
+  const footer = document.createElement('div');
+  footer.className='footer';
+  footer.innerHTML = `<button class="btn-primary" id="nextBtn" ${canProceed?'':'disabled'}>Далее</button>
+    ${priceNote?`<span class="btn-price">${priceNote}</span>`:''}`;
+  wrap.appendChild(footer);
+  setTimeout(()=>{
+    const btn = document.getElementById('nextBtn');
+    if(btn) btn.onclick = goNext;
+  },0);
+  return wrap;
+}
+
+/* ВРЕМЕННОЕ РЕШЕНИЕ: пока нет фото, рисуем банку свечи через SVG и красим её
+   под выбор пользователя. Когда появятся реальные фото — замени содержимое
+   этой функции на <img src="images/свеча-цвет.jpg"> с нужным путём. */
+function candlePreviewSVG(){
+  const photo = COLOR_PHOTOS[state.color];
+  if(photo){
+    return `<div style="display:flex;justify-content:center;padding:6px 0 20px;">
+      <img src="${photo}" alt="Свеча" style="max-width:220px;max-height:180px;border-radius:12px;object-fit:cover;">
+    </div>`;
+  }
+  const colorObj = COLORS.find(c=>c.id===state.color);
+  const hex = colorObj ? colorObj.hex : '#E4D9C4';
+  const lidColor = state.finish==='chrome' ? 'url(#chromeGrad)' : hex;
+  return `
+    <div style="display:flex;justify-content:center;padding:10px 0 22px;">
+      <svg width="130" height="150" viewBox="0 0 130 150" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="chromeGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#c9c9c9"/>
+            <stop offset="45%" stop-color="#f5f5f5"/>
+            <stop offset="55%" stop-color="#e0e0e0"/>
+            <stop offset="100%" stop-color="#9c9c9c"/>
+          </linearGradient>
+        </defs>
+        <rect x="20" y="40" width="90" height="95" rx="10" fill="${hex}" stroke="#00000014" stroke-width="1.5"/>
+        <rect x="20" y="40" width="90" height="18" rx="9" fill="${lidColor}" stroke="#00000022" stroke-width="1"/>
+        <circle cx="65" cy="49" r="4" fill="${state.finish==='chrome' ? '#8f8f8f' : '#00000030'}"/>
+        <path d="M65 20 Q60 30 65 36 Q70 30 65 20" fill="#E8A33D"/>
+        <line x1="65" y1="36" x2="65" y2="44" stroke="#5b4a3a" stroke-width="1.5"/>
+      </svg>
+    </div>`;
+}
+
+function holderPreviewSVG(){
+  const photo = HOLDER_PHOTOS[state.holderColor];
+  if(photo){
+    return `<div style="display:flex;justify-content:center;padding:6px 0 20px;">
+      <img src="${photo}" alt="Подсвечник" style="max-width:240px;max-height:170px;border-radius:12px;object-fit:cover;">
+    </div>`;
+  }
+  const colorObj = HOLDER_COLORS.find(c=>c.id===state.holderColor);
+  const hex = colorObj ? colorObj.hex : '#E4D9C4';
+  return `
+    <div style="display:flex;justify-content:center;padding:10px 0 22px;">
+      <svg width="180" height="90" viewBox="0 0 180 90" xmlns="http://www.w3.org/2000/svg">
+        <g fill="${hex}" stroke="#00000014" stroke-width="1.2">
+          <rect x="6" y="30" width="16" height="8" rx="2"/>
+          <rect x="26" y="24" width="16" height="14" rx="2"/>
+          <rect x="46" y="18" width="16" height="20" rx="2"/>
+          <rect x="112" y="18" width="16" height="20" rx="2"/>
+          <rect x="132" y="24" width="16" height="14" rx="2"/>
+          <rect x="152" y="30" width="16" height="8" rx="2"/>
+          <circle cx="90" cy="45" r="34"/>
+        </g>
+        <circle cx="90" cy="45" r="24" fill="#FFFDF7" stroke="#00000022" stroke-width="1"/>
+        <circle cx="90" cy="45" r="18" fill="#F4EFE3"/>
+        <path d="M90 33 Q86 41 90 46 Q94 41 90 33" fill="#E8A33D"/>
+        <line x1="90" y1="46" x2="90" y2="50" stroke="#5b4a3a" stroke-width="1.3"/>
+      </svg>
+    </div>`;
+}
+
+function stepContainer(){
+  const body = document.createElement('div');
+  body.className='option-cards';
+  CONTAINERS.forEach(c=>{
+    const card = document.createElement('button');
+    card.className='option-card'+(state.container===c.id?' selected':'');
+    card.onclick=()=>{state.container=c.id; render();};
+    card.innerHTML = `
+      ${c.photo ? `<img src="${c.photo}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : `<div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="8" width="12" height="12" rx="2"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>`}
+      <div class="body"><strong>${c.name}</strong><p>${c.desc ? c.desc + ' · ' : ''}${c.price}₽</p></div>
+      <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></div>`;
+    body.appendChild(card);
+  });
+  return screenShell('Выберите модель', 'Это основа вашей свечи', body, !!state.container, null, candlePreviewSVG());
+}
+
+function stepColor(field, colors, title, sub){
+  const body = document.createElement('div');
+  body.className='swatch-grid';
+  colors.forEach(c=>{
+    const b = document.createElement('button');
+    b.className='swatch'+(state[field]===c.id?' selected':'');
+    b.onclick=()=>{state[field]=c.id; render();};
+    b.innerHTML = `<span class="dot" style="background:${c.hex}"></span><span>${c.name}</span>`;
+    body.appendChild(b);
+  });
+  return screenShell(title, sub, body, !!state[field], null, field==='color' ? candlePreviewSVG() : (field==='holderColor' ? holderPreviewSVG() : null));
+}
+
+function stepFinish(){
+  const body = document.createElement('div');
+  body.className='option-cards';
+  FINISHES.forEach(f=>{
+    const card = document.createElement('button');
+    card.className='option-card'+(state.finish===f.id?' selected':'');
+    card.onclick=()=>{state.finish=f.id; render();};
+    card.innerHTML = `
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/></svg></div>
+      <div class="body"><strong>${f.name}</strong><p>${f.desc}</p></div>
+      <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></div>`;
+    body.appendChild(card);
+  });
+  return screenShell('Детали', 'Хром или единый цвет', body, !!state.finish, null, candlePreviewSVG());
+}
+
+const HOLDER_SET_SIZE = 5;
+
+function stepFragranceMulti(){
+  const body = document.createElement('div');
+  body.className='fragrance-list';
+  HOLDER_FRAGRANCES.forEach(f=>{
+    const isSelected = state.holderFragrances.includes(f.id);
+    const atLimit = state.holderFragrances.length >= HOLDER_SET_SIZE && !isSelected;
+    const card = document.createElement('button');
+    card.className='fragrance-card'+(isSelected?' selected':'')+(atLimit?' disabled-card':'');
+    card.style.opacity = atLimit ? '0.4' : '1';
+    card.onclick=()=>{
+      if(isSelected){
+        state.holderFragrances = state.holderFragrances.filter(id=>id!==f.id);
+      } else if(state.holderFragrances.length < HOLDER_SET_SIZE){
+        state.holderFragrances.push(f.id);
+      }
+      render();
+    };
+    card.innerHTML = `
+      <div class="fr-top">
+        <div class="fr-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v4.5a3 3 0 0 1-.8 2L7 12a4 4 0 0 0-1 2.6V19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4.4a4 4 0 0 0-1-2.6l-2.2-2.5a3 3 0 0 1-.8-2V3"/></svg></div>
+        <div class="fr-body">
+          <div class="fr-head"><strong>${f.name}</strong><span class="fr-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></span></div>
+          <div class="fr-notes">${f.notes}</div>
+          <p class="fr-desc">${f.desc}</p>
+        </div>
+      </div>`;
+    body.appendChild(card);
+  });
+  const left = HOLDER_SET_SIZE - state.holderFragrances.length;
+  const sub = left > 0
+    ? `Выбрано ${state.holderFragrances.length} из ${HOLDER_SET_SIZE} — осталось выбрать ещё ${left}`
+    : `Выбрано ${HOLDER_SET_SIZE} из ${HOLDER_SET_SIZE} — готово`;
+  return screenShell('Соберите набор из 5 ароматов', sub, body, state.holderFragrances.length===HOLDER_SET_SIZE);
+}
+function stepFragrance(field, list){
+  const body = document.createElement('div');
+  body.className='fragrance-list';
+  list.forEach(f=>{
+    const card = document.createElement('button');
+    card.className='fragrance-card'+(state[field]===f.id?' selected':'');
+    card.onclick=()=>{state[field]=f.id; render();};
+    card.innerHTML = `
+      <div class="fr-top">
+        <div class="fr-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v4.5a3 3 0 0 1-.8 2L7 12a4 4 0 0 0-1 2.6V19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4.4a4 4 0 0 0-1-2.6l-2.2-2.5a3 3 0 0 1-.8-2V3"/></svg></div>
+        <div class="fr-body">
+          <div class="fr-head"><strong>${f.name}</strong><span class="fr-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></span></div>
+          <div class="fr-notes">${f.notes}</div>
+          <p class="fr-desc">${f.desc}</p>
+        </div>
+      </div>`;
+    body.appendChild(card);
+  });
+  return screenShell('Выберите аромат', '', body, !!state[field]);
+}
+
+function stepWick(){
+  const body = document.createElement('div');
+  body.className='option-cards';
+  WICKS.forEach(w=>{
+    const card = document.createElement('button');
+    card.className='option-card'+(state.wick===w.id?' selected':'');
+    card.onclick=()=>{state.wick=w.id; render();};
+    card.innerHTML = `
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v14M8 22c0-3 2-4 4-6 2 2 4 3 4 6"/></svg></div>
+      <div class="body"><strong>${w.name}</strong><p>${w.desc}</p></div>
+      <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></div>`;
+    body.appendChild(card);
+  });
+  return screenShell('Фитиль', '', body, !!state.wick);
+}
+
+function calcPrice(){
+  if(state.branch==='candle'){
+    const c = CONTAINERS.find(x=>x.id===state.container);
+    return c ? c.price : 0;
+  }
+  return 1000; // базовая цена подсвечника
+}
+
+function findName(list,id){ const f=list.find(x=>x.id===id); return f? f.name : '—'; }
+
+function stepSummary(){
+  const body = document.createElement('div');
+  const card = document.createElement('div');
+  card.className='summary-card';
+
+  let rows = '';
+  if(state.branch==='candle'){
+    rows = `
+      <div class="summary-row"><span class="k">Контейнер</span><span class="v">${findName(CONTAINERS,state.container)}</span></div>
+      <div class="summary-row"><span class="k">Цвет</span><span class="v">${findName(COLORS,state.color)}</span></div>
+      <div class="summary-row"><span class="k">Отделка</span><span class="v">${findName(FINISHES,state.finish)}</span></div>
+      <div class="summary-row"><span class="k">Аромат</span><span class="v">${findName(FRAGRANCES,state.fragrance)}</span></div>
+      <div class="summary-row"><span class="k">Фитиль</span><span class="v">${findName(WICKS,state.wick)}</span></div>`;
+  } else {
+    const namesList = state.holderFragrances.map(id => findName(HOLDER_FRAGRANCES, id)).join(', ');
+    rows = `
+      <div class="summary-row"><span class="k">Цвет подсвечника</span><span class="v">${findName(HOLDER_COLORS,state.holderColor)}</span></div>
+      <div class="summary-row"><span class="k">Набор ароматов (5 шт.)</span><span class="v" style="text-align:right;max-width:220px;">${namesList}</span></div>`;
+  }
+  card.innerHTML = rows + `
+    <div class="price-row"><span class="label">Итого</span><span class="amount">${calcPrice()}₽</span></div>`;
+  body.appendChild(card);
+  return screenShell('Проверьте заказ', 'Всё верно?', body, true);
+}
+
+function stepContact(){
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <label class="field-label">Имя</label>
+    <input type="text" id="nameInput" placeholder="Как к вам обращаться" value="${state.name}">
+    <label class="field-label">Телефон</label>
+    <input type="tel" id="phoneInput" placeholder="+7 999 000-00-00" value="${state.phone}">
+    <label class="field-label">Почта</label>
+    <input type="email" id="emailInput" placeholder="Для отправки электронного чека" value="${state.email}">`;
+  const wrap = screenShell('Контакты', 'Понадобятся для подтверждения заказа и оплаты', body, !!(state.name && state.phone && state.email), 'Дальше — оплата через ЮKassa');
+  setTimeout(()=>{
+    document.getElementById('nameInput').oninput = e=>{state.name=e.target.value; updateBtn();};
+    document.getElementById('phoneInput').oninput = e=>{state.phone=e.target.value; updateBtn();};
+    document.getElementById('emailInput').oninput = e=>{state.email=e.target.value; updateBtn();};
+    function updateBtn(){
+      document.getElementById('nextBtn').disabled = !(state.name && state.phone && state.email);
+    }
+  },0);
+  return wrap;
+}
+
+async function submitOrder(){
+  const btn = document.getElementById('nextBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Оформляем…'; }
+
+  // TODO следующий этап: этот запрос уходит в /api/create-order,
+  // который создаёт платёж в ЮKassa и возвращает ссылку на оплату.
+  try{
+    const res = await fetch('/api/create-order', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ...state, price: calcPrice() })
+    });
+    const data = await res.json();
+    if(data && data.confirmationUrl){
+      window.location.href = data.confirmationUrl; // редирект на страницу оплаты ЮKassa
+      return;
+    }
+  }catch(e){
+    console.warn('Бэкенд ещё не подключен — показываю заглушку успеха', e);
+  }
+  showThankYou();
+}
+
+function showThankYou(){
+  app.innerHTML = `
+    <div class="order-status">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-9"/></svg></div>
+      <h1>Заказ оформлен</h1>
+      <p class="subtitle">Мы свяжемся с вами в Telegram для подтверждения оплаты и доставки.</p>
+    </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
